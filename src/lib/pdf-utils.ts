@@ -1,9 +1,9 @@
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
-import { version } from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// Set worker to match installed version
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
+// Use bundled worker so preview/publish don't depend on external CDN paths
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export interface PdfPage {
   id: string;
