@@ -132,7 +132,7 @@ export async function compressPdf(
 }
 
 export function downloadBlob(data: Uint8Array, filename: string) {
-  const blob = new Blob([data], { type: 'application/pdf' });
+  const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
