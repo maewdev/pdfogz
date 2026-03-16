@@ -38,7 +38,7 @@ export async function loadPdfFile(file: File): Promise<{ pdfFile: PdfFile; pages
     canvas.height = viewport.height;
     const ctx = canvas.getContext('2d')!;
     
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
     
     pages.push({
       id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
