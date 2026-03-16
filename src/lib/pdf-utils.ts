@@ -1,8 +1,9 @@
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
+import { version } from 'pdfjs-dist';
 
-// Set worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
+// Set worker to match installed version
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
 
 export interface PdfPage {
   id: string;
@@ -37,7 +38,7 @@ export async function loadPdfFile(file: File): Promise<{ pdfFile: PdfFile; pages
     canvas.height = viewport.height;
     const ctx = canvas.getContext('2d')!;
     
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
     
     pages.push({
       id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
@@ -73,7 +74,7 @@ export async function renderPageHighRes(
   canvas.height = viewport.height;
   const ctx = canvas.getContext('2d')!;
   
-  await page.render({ canvasContext: ctx, viewport }).promise;
+  await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
   const dataUrl = canvas.toDataURL('image/png');
   canvas.remove();
   pdfDoc.destroy();
