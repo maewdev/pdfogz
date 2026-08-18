@@ -90,33 +90,38 @@ const Index = () => {
     toast('All pages cleared');
   }, []);
 
+  const generateRandomFilename = useCallback((base: string) => {
+    const id = crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10);
+    return `${base}-${id}.pdf`;
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (pages.length === 0) return;
     setProcessing(true);
     try {
       const data = await buildPdf(sourceFiles, pages);
-      downloadBlob(data, 'organized.pdf');
+      downloadBlob(data, generateRandomFilename('organized'));
       toast.success(`Saved! (${formatFileSize(data.length)})`);
     } catch (err) {
       toast.error('Failed to save PDF');
       console.error(err);
     }
     setProcessing(false);
-  }, [pages, sourceFiles]);
+  }, [pages, sourceFiles, generateRandomFilename]);
 
   const handleCompress = useCallback(async () => {
     if (pages.length === 0) return;
     setProcessing(true);
     try {
       const data = await compressPdf(sourceFiles, pages);
-      downloadBlob(data, 'compressed.pdf');
+      downloadBlob(data, generateRandomFilename('compressed'));
       toast.success(`Compressed! (${formatFileSize(data.length)})`);
     } catch (err) {
       toast.error('Failed to compress PDF');
       console.error(err);
     }
     setProcessing(false);
-  }, [pages, sourceFiles]);
+  }, [pages, sourceFiles, generateRandomFilename]);
 
   const totalOriginalSize = sourceFiles.reduce((sum, f) => sum + f.data.length, 0);
 
