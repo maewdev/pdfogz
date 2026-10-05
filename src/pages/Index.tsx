@@ -211,6 +211,7 @@ const Index = () => {
                     index={index}
                     onDelete={handleDelete}
                     onZoom={setZoomPage}
+                    onRotate={handleRotate}
                   />
                 ))}
               </div>
