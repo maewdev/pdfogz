@@ -52,13 +52,21 @@ export function PageThumbnail({ page, index, onDelete, onZoom, onRotate }: PageT
         <img
           src={page.thumbnail}
           alt={`Page ${index + 1}`}
-          className="w-full rounded-md object-contain bg-surface"
+          className="w-full rounded-md object-contain bg-surface transition-transform duration-200"
+          style={{ transform: `rotate(${page.rotation}deg)` }}
           draggable={false}
         />
       </div>
 
       {/* Actions */}
       <div className="flex items-center justify-center gap-1 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => onRotate(page.id)}
+          className="p-1.5 rounded-md bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+          title="Rotate 90°"
+        >
+          <RotateCw size={14} />
+        </button>
         <button
           onClick={() => onZoom(page)}
           className="p-1.5 rounded-md bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors"

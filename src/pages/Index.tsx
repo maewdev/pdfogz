@@ -84,6 +84,12 @@ const Index = () => {
     toast('Page removed');
   }, []);
 
+  const handleRotate = useCallback((id: string) => {
+    setPages(prev =>
+      prev.map(p => (p.id === id ? { ...p, rotation: (p.rotation + 90) % 360 } : p))
+    );
+  }, []);
+
   const handleDeleteAll = useCallback(() => {
     setPages([]);
     setSourceFiles([]);
