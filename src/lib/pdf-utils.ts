@@ -114,32 +114,72 @@ export async function buildPdf(
   return newPdf.save();
 }
 
+export type CompressQuality = 'low' | 'medium' | 'high';
+
+const QUALITY_PRESETS: Record<CompressQuality, { dpi: number; jpeg: number }> = {
+  low: { dpi: 96, jpeg: 0.5 },    // smallest size, readable
+  medium: { dpi: 120, jpeg: 0.65 }, // balanced
+  high: { dpi: 150, jpeg: 0.8 },   // best quality, larger size
+};
+
+/**
+ * High-ratio compression: rasterizes each page to JPEG at a controlled DPI
+ * and rebuilds the PDF from those images. Typically 70-95% smaller than the
+ * original. Lossy — best for documents meant for viewing/sharing.
+ */
 export async function compressPdf(
   sourceFiles: PdfFile[],
-  pages: PdfPage[]
+  pages: PdfPage[],
+  quality: CompressQuality = 'medium',
+  onProgress?: (done: number, total: number) => void
 ): Promise<Uint8Array> {
-  // Build PDF with compression options
+  const { dpi, jpeg } = QUALITY_PRESETS[quality];
+  const scale = dpi / 72; // PDF points are 1/72 inch
+
   const newPdf = await PDFDocument.create();
-  
-  const loadedDocs: Map<number, Awaited<ReturnType<typeof PDFDocument.load>>> = new Map();
-  
+  const loadedDocs: Map<number, Awaited<ReturnType<typeof pdfjsLib.getDocument>['promise']>> = new Map();
+
+  let done = 0;
   for (const page of pages) {
     if (!loadedDocs.has(page.sourceFileIndex)) {
-      const doc = await PDFDocument.load(sourceFiles[page.sourceFileIndex].data);
-      loadedDocs.set(page.sourceFileIndex, doc);
+      loadedDocs.set(
+        page.sourceFileIndex,
+        await pdfjsLib.getDocument({ data: sourceFiles[page.sourceFileIndex].data.slice() }).promise
+      );
     }
-    
-    const sourceDoc = loadedDocs.get(page.sourceFileIndex)!;
-    const [copiedPage] = await newPdf.copyPages(sourceDoc, [page.pageIndex]);
-    applyRotation(copiedPage, page.rotation);
-    newPdf.addPage(copiedPage);
+    const doc = loadedDocs.get(page.sourceFileIndex)!;
+    const pdfjsPage = await doc.getPage(page.pageIndex + 1);
+
+    const baseViewport = pdfjsPage.getViewport({ scale: 1 });
+    const viewport = pdfjsPage.getViewport({ scale, rotation: (pdfjsPage.rotate + page.rotation) % 360 });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    await pdfjsPage.render({ canvasContext: ctx, viewport, canvas } as any).promise;
+
+    const jpegDataUrl = canvas.toDataURL('image/jpeg', jpeg);
+    const image = await newPdf.embedJpg(jpegDataUrl);
+    canvas.remove();
+
+    // Page size in points, accounting for rotation
+    const rotated = (pdfjsPage.rotate + page.rotation) % 180 !== 0;
+    const w = rotated ? baseViewport.height : baseViewport.width;
+    const h = rotated ? baseViewport.width : baseViewport.height;
+    const newPage = newPdf.addPage([w, h]);
+    newPage.drawImage(image, { x: 0, y: 0, width: w, height: h });
+
+    done++;
+    onProgress?.(done, pages.length);
   }
-  
-  // Save with object streams for better compression
-  return newPdf.save({
-    useObjectStreams: true,
-    addDefaultPage: false,
-  });
+
+  for (const doc of loadedDocs.values()) doc.destroy();
+
+  return newPdf.save({ useObjectStreams: true, addDefaultPage: false });
 }
 
 export function downloadBlob(data: Uint8Array, filename: string) {
