@@ -76,7 +76,7 @@ export function ZoomModal({ page, sourceFiles, onClose }: ZoomModalProps) {
           <img
             src={highResImage || page.thumbnail}
             alt="Zoomed page"
-            style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
+            style={{ transform: `scale(${zoom}) rotate(${page.rotation}deg)`, transformOrigin: 'center center' }}
             className="transition-transform duration-200 rounded-lg shadow-2xl"
             draggable={false}
           />

@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
@@ -12,6 +12,7 @@ export interface PdfPage {
   thumbnail: string;
   width: number;
   height: number;
+  rotation: number; // extra rotation in degrees (0, 90, 180, 270)
 }
 
 export interface PdfFile {
@@ -47,6 +48,7 @@ export async function loadPdfFile(file: File): Promise<{ pdfFile: PdfFile; pages
       thumbnail: canvas.toDataURL('image/jpeg', 0.6),
       width: viewport.width,
       height: viewport.height,
+      rotation: 0,
     });
     
     canvas.remove();
@@ -82,6 +84,12 @@ export async function renderPageHighRes(
   return dataUrl;
 }
 
+function applyRotation(copiedPage: { getRotation: () => { angle: number }; setRotation: (r: ReturnType<typeof degrees>) => void }, rotation: number) {
+  if (rotation % 360 === 0) return;
+  const current = copiedPage.getRotation().angle;
+  copiedPage.setRotation(degrees((current + rotation) % 360));
+}
+
 export async function buildPdf(
   sourceFiles: PdfFile[],
   pages: PdfPage[]
@@ -99,6 +107,7 @@ export async function buildPdf(
     
     const sourceDoc = loadedDocs.get(page.sourceFileIndex)!;
     const [copiedPage] = await newPdf.copyPages(sourceDoc, [page.pageIndex]);
+    applyRotation(copiedPage, page.rotation);
     newPdf.addPage(copiedPage);
   }
   
@@ -122,6 +131,7 @@ export async function compressPdf(
     
     const sourceDoc = loadedDocs.get(page.sourceFileIndex)!;
     const [copiedPage] = await newPdf.copyPages(sourceDoc, [page.pageIndex]);
+    applyRotation(copiedPage, page.rotation);
     newPdf.addPage(copiedPage);
   }
   
