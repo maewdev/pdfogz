@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
@@ -12,6 +12,7 @@ export interface PdfPage {
   thumbnail: string;
   width: number;
   height: number;
+  rotation: number; // extra rotation in degrees (0, 90, 180, 270)
 }
 
 export interface PdfFile {
@@ -47,6 +48,7 @@ export async function loadPdfFile(file: File): Promise<{ pdfFile: PdfFile; pages
       thumbnail: canvas.toDataURL('image/jpeg', 0.6),
       width: viewport.width,
       height: viewport.height,
+      rotation: 0,
     });
     
     canvas.remove();
