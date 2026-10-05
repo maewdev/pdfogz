@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Trash2, GripVertical, ZoomIn } from 'lucide-react';
+import { Trash2, GripVertical, ZoomIn, RotateCw } from 'lucide-react';
 import type { PdfPage } from '@/lib/pdf-utils';
 
 interface PageThumbnailProps {
@@ -8,9 +8,10 @@ interface PageThumbnailProps {
   index: number;
   onDelete: (id: string) => void;
   onZoom: (page: PdfPage) => void;
+  onRotate: (id: string) => void;
 }
 
-export function PageThumbnail({ page, index, onDelete, onZoom }: PageThumbnailProps) {
+export function PageThumbnail({ page, index, onDelete, onZoom, onRotate }: PageThumbnailProps) {
   const {
     attributes,
     listeners,

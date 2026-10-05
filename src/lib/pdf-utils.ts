@@ -84,6 +84,12 @@ export async function renderPageHighRes(
   return dataUrl;
 }
 
+function applyRotation(copiedPage: { getRotation: () => { angle: number }; setRotation: (r: ReturnType<typeof degrees>) => void }, rotation: number) {
+  if (rotation % 360 === 0) return;
+  const current = copiedPage.getRotation().angle;
+  copiedPage.setRotation(degrees((current + rotation) % 360));
+}
+
 export async function buildPdf(
   sourceFiles: PdfFile[],
   pages: PdfPage[]
@@ -101,6 +107,7 @@ export async function buildPdf(
     
     const sourceDoc = loadedDocs.get(page.sourceFileIndex)!;
     const [copiedPage] = await newPdf.copyPages(sourceDoc, [page.pageIndex]);
+    applyRotation(copiedPage, page.rotation);
     newPdf.addPage(copiedPage);
   }
   
@@ -124,6 +131,7 @@ export async function compressPdf(
     
     const sourceDoc = loadedDocs.get(page.sourceFileIndex)!;
     const [copiedPage] = await newPdf.copyPages(sourceDoc, [page.pageIndex]);
+    applyRotation(copiedPage, page.rotation);
     newPdf.addPage(copiedPage);
   }
   
